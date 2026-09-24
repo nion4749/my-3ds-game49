@@ -30,7 +30,6 @@ jobs:
           typedef unsigned int u32;
           typedef unsigned long long u64;
           
-          // Исправлено: теперь функция возвращает int, и цикл while сработает идеально!
           int aptMainLoop(void);
           void hidScanInput(void);
           unsigned int hidKeysDown(void);
@@ -43,7 +42,17 @@ jobs:
           #endif
           EOF
 
-          echo "int aptMainLoop(void) { return 0; }" > mock_3ds/lib/stub.c
+          # Наполняем заглушку функциями, чтобы линкер успешно их сшил
+          cat << 'EOF' > mock_3ds/lib/stub.c
+          int aptMainLoop(void) { return 0; }
+          void hidScanInput(void) {}
+          unsigned int hidKeysDown(void) { return 0; }
+          void gfxInitDefault(void) {}
+          void gfxFlushBuffers(void) {}
+          void gfxSwapBuffers(void) {}
+          void gfxExit(void) {}
+          EOF
+          
           arm-none-eabi-gcc -march=armv6k -mtune=mpcore -mfloat-abi=hard -mfpu=vfpv2 -c mock_3ds/lib/stub.c -o mock_3ds/lib/stub.o
           arm-none-eabi-ar rcs mock_3ds/lib/libctru.a mock_3ds/lib/stub.o
 
