@@ -16,7 +16,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gcc-arm-none-eabi upx-ucl
 
-      - name: Create Fake Libctru Stubs
+      - name: Create Complete 3DS Stubs
         run: |
           mkdir -p mock_3ds/include
           mkdir -p mock_3ds/lib
@@ -24,18 +24,26 @@ jobs:
           cat << 'EOF' > mock_3ds/include/3ds.h
           #ifndef CTRU_H
           #define CTRU_H
-          void aptMainLoop(void);
+          
+          typedef unsigned char u8;
+          typedef unsigned short u16;
+          typedef unsigned int u32;
+          typedef unsigned long long u64;
+          
+          // Исправлено: теперь функция возвращает int, и цикл while сработает идеально!
+          int aptMainLoop(void);
           void hidScanInput(void);
           unsigned int hidKeysDown(void);
           void gfxInitDefault(void);
           void gfxFlushBuffers(void);
           void gfxSwapBuffers(void);
           void gfxExit(void);
+          
           #define KEY_START (1<<3)
           #endif
           EOF
 
-          echo "void dummy(void) {}" > mock_3ds/lib/stub.c
+          echo "int aptMainLoop(void) { return 0; }" > mock_3ds/lib/stub.c
           arm-none-eabi-gcc -march=armv6k -mtune=mpcore -mfloat-abi=hard -mfpu=vfpv2 -c mock_3ds/lib/stub.c -o mock_3ds/lib/stub.o
           arm-none-eabi-ar rcs mock_3ds/lib/libctru.a mock_3ds/lib/stub.o
 
@@ -51,9 +59,7 @@ jobs:
           echo "Файл успешно найден по адресу: $REAL_FILE"
           
           echo "=== Автоматическая очистка кода от рекламы ==="
-          # Эта команда сама найдет и удалит все строчки, содержащие упоминание сайта
           sed -i '/ROMSFOREVER/d' "$REAL_FILE"
-          # На всякий случай удаляем любые строки, которые начинаются с дефиса и пробела
           sed -i '/^- /d' "$REAL_FILE"
           
           echo "=== Компиляция в бинарник ==="
