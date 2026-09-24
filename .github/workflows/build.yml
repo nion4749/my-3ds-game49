@@ -7,36 +7,29 @@ on:
 jobs:
   compile:
     runs-on: ubuntu-latest
-    container: devkitpro/devkitarm:latest
+    # Используем автономный контейнер сообщества, где всё уже установлено
+    container: mtheall/ftpd:latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install 3DS SDK and libctru
-        run: |
-          sudo apt-get update || true
-          dkp-pacman -Sy --noconfirm devkitpro-keyring || true
-          dkp-pacman -Syu --noconfirm
-          dkp-pacman -S --noconfirm 3ds-dev
-
       - name: Direct Build to 3DSX
         run: |
+          # Прописываем пути к уже установленным в этом контейнере инструментам
           export DEVKITPRO=/opt/devkitpro
-          export DEVKITARM=/opt/devkitpro/devkitARM
+          export DEVKITARM=$DEVKITPRO/devkitARM
           
           echo "=== Поиск вашего файла кода ==="
-          # Ищем файл в любых папках, игнорируя регистр букв и расширение .txt
-          REAL_FILE=$(find . -iname "main.c" -o -iname "main.c.txt" | head -n 1)
+          REAL_FILE=$(find . -iname "main.c" | head -n 1)
           
           if [ -z "$REAL_FILE" ]; then
-            echo "КРИТИЧЕСКАЯ ОШИБКА: Файл main.c вообще не найден в репозитории!"
-            ls -R
+            echo "ОШИБКА: Файл main.c не найден!"
             exit 1
           fi
           
           echo "Файл успешно найден по адресу: $REAL_FILE"
           
-          echo "=== Компиляция в бинарник ==="
+          echo "=== Прямая компиляция кода ==="
           $DEVKITARM/bin/arm-none-eabi-gcc -march=armv6k -mtune=mpcore -mfloat-abi=hard -mfpu=vfpv2 -O2 -mword-relocations -fomit-frame-pointer -ffunction-sections -DARM11 -D_3DS -I$DEVKITPRO/libctru/include -specs=3dsx.specs "$REAL_FILE" -L$DEVKITPRO/libctru/lib -lctru -lm -o game.elf
           
           echo "=== Упаковка в финальный формат 3DSX ==="
