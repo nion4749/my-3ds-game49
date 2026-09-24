@@ -1,26 +1,21 @@
 #---------------------------------------------------------------------------------
-#.SUFFIXES:
-#---------------------------------------------------------------------------------
 ifeq ($(strip $(DEVKITARM)),)
 $(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
 endif
 
 include $(DEVKITARM)/3ds_rules
 
-#---------------------------------------------------------------------------------
-# TARGET is the name of the output
-# BUILD is the directory where object files & dependencies will be placed
-# SOURCES is a list of directories containing source code
-#---------------------------------------------------------------------------------
+# Явное указание правильных компиляторов для 3DS
+CC      := $(DEVKITARM)/bin/arm-none-eabi-gcc
+CXX     := $(DEVKITARM)/bin/arm-none-eabi-g++
+LD      := $(DEVKITARM)/bin/arm-none-eabi-gcc
+
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	source
 DATA		:=	data
 INCLUDES	:=	include
 
-#---------------------------------------------------------------------------------
-# options for tools
-#---------------------------------------------------------------------------------
 ARCH	:=	-march=armv6k -mtune=mpcore -mfloat-abi=hard -mfpu=vfpv2
 
 CFLAGS	:=	-g -Wall -O2 -mword-relocations \
@@ -34,13 +29,9 @@ LDFLAGS	=	-specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
 LIBS	:=	-lctru -lm
 
-#---------------------------------------------------------------------------------
-# list of directories
-#---------------------------------------------------------------------------------
 SUFX	:=	.3dsx
 
 ifneq ($(BUILD),$(notdir $(CURDIR)))
-#---------------------------------------------------------------------------------
 
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
@@ -60,7 +51,6 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 
 .PHONY: $(BUILD) clean all
 
-#---------------------------------------------------------------------------------
 all: $(BUILD)
 
 $(BUILD):
@@ -71,21 +61,16 @@ clean:
 	@echo clean ...
 	@rm -fr $(BUILD) $(TARGET)$(SUFX) $(TARGET).elf
 
-#---------------------------------------------------------------------------------
 else
 
 DEPENDS	:=	$(OFILES:.o=.d)
 
-#---------------------------------------------------------------------------------
-# main targets
-#---------------------------------------------------------------------------------
 $(OUTPUT)$(SUFX) : $(OUTPUT).elf
 
 $(OUTPUT).elf : $(OFILES)
+	@echo linking $(notdir $@)
+	@$(LD) $(LDFLAGS) $(OFILES) $(LIBS) -o $@
 
-#---------------------------------------------------------------------------------
-# Compile rules for C/C++
-#---------------------------------------------------------------------------------
 %.o: %.c
 	@echo $(notdir $<)
 	@$(CC) -MMD -MP -MF $(DEPSDIR)/$*.d $(CFLAGS) -c $< -o $@
@@ -96,10 +81,5 @@ $(OUTPUT).elf : $(OFILES)
 
 -include $(DEPENDS)
 
-#---------------------------------------------------------------------------------
 endif
-#---------------------------------------------------------------------------------
 
-
-				
-				
