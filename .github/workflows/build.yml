@@ -14,13 +14,10 @@ jobs:
         run: |
           git config --global --add safe.directory '*'
 
-      - name: Install 3DS Libraries
-        run: |
-          sudo apt-get update || true
-          dkp-pacman -Syu --noconfirm
-          dkp-pacman -S --noconfirm 3ds-dev
-
       - name: Build game
+        env:
+          DEVKITPRO: /opt/devkitpro
+          DEVKITARM: /opt/devkitpro/devkitARM
         run: |
           make
 
@@ -29,3 +26,4 @@ jobs:
         with:
           name: my-3ds-game
           path: "*.3dsx"
+
