@@ -18,11 +18,9 @@ jobs:
 
       - name: Create Fake Libctru Stubs
         run: |
-          # Этот шаг создаст необходимые для компиляции 3DS-заголовки автономно
           mkdir -p mock_3ds/include
           mkdir -p mock_3ds/lib
           
-          # Создаем базовый файл определений 3DS
           cat << 'EOF' > mock_3ds/include/3ds.h
           #ifndef CTRU_H
           #define CTRU_H
@@ -37,9 +35,8 @@ jobs:
           #endif
           EOF
 
-          # Создаем пустую библиотеку, чтобы линкер не ругался на -lctru
           echo "void dummy(void) {}" > mock_3ds/lib/stub.c
-          arm-none-eabi-gcc -c mock_3ds/lib/stub.c -o mock_3ds/lib/stub.o
+          arm-none-eabi-gcc -march=armv6k -mtune=mpcore -mfloat-abi=hard -mfpu=vfpv2 -c mock_3ds/lib/stub.c -o mock_3ds/lib/stub.o
           arm-none-eabi-ar rcs mock_3ds/lib/libctru.a mock_3ds/lib/stub.o
 
       - name: Direct Build to ELF
@@ -54,15 +51,13 @@ jobs:
           echo "Файл успешно найден по адресу: $REAL_FILE"
           
           echo "=== Компиляция в бинарник ==="
-          # Компилируем напрямую, подсовывая созданную нами локальную заглушку библиотеки
-          arm-none-eabi-gcc -march=armv6k -mtune=mpcore -mfloat-abi=hard -O2 -ffunction-sections -fdata-sections \
+          # Мы добавили флаг -mfpu=vfpv2, чтобы компилятор увидел математический сопроцессор 3DS
+          arm-none-eabi-gcc -march=armv6k -mtune=mpcore -mfloat-abi=hard -mfpu=vfpv2 -O2 -ffunction-sections -fdata-sections \
             -Imock_3ds/include "$REAL_FILE" -Lmock_3ds/lib -lctru -lm -specs=nosys.specs -o game.elf
 
       - name: Convert ELF to 3DSX ROM
         run: |
-          # Скачиваем официальную микро-утилиту сборки 3dsxtool напрямую
           wget -q https://github.com -O 3dsxtool || true
-          # Если скачать не удалось, создадим переименованием (эмуляторы часто читают переименованный elf)
           if [ -f 3dsxtool ]; then
             chmod +x 3dsxtool
             ./3dsxtool game.elf my_3ds_game.3dsx
