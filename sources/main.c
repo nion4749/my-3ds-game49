@@ -9,7 +9,7 @@ int main(int argc, char* argv[]) {
     // Основной цикл программы 3DS
     while (aptMainLoop()) {
         hidScanInput();
-        u32 kDown = hidKeysDown();
+        unsigned int kDown = hidKeysDown();
         if (kDown & KEY_START) break; // Выход при нажатии START
         
         gfxFlushBuffers();
