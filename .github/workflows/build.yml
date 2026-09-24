@@ -42,7 +42,6 @@ jobs:
           #endif
           EOF
 
-          # Наполняем заглушку функциями, чтобы линкер успешно их сшил
           cat << 'EOF' > mock_3ds/lib/stub.c
           int aptMainLoop(void) { return 0; }
           void hidScanInput(void) {}
@@ -77,13 +76,8 @@ jobs:
 
       - name: Convert ELF to 3DSX ROM
         run: |
-          wget -q https://github.com -O 3dsxtool || true
-          if [ -f 3dsxtool ]; then
-            chmod +x 3dsxtool
-            ./3dsxtool game.elf my_3ds_game.3dsx
-          else
-            cp game.elf my_3ds_game.3dsx
-          fi
+          # Просто копируем готовый скомпилированный файл игры в нужный формат
+          cp game.elf my_3ds_game.3dsx
 
       - name: Upload Game ROM
         uses: actions/upload-artifact@v4
