@@ -50,8 +50,13 @@ jobs:
           fi
           echo "Файл успешно найден по адресу: $REAL_FILE"
           
+          echo "=== Автоматическая очистка кода от рекламы ==="
+          # Эта команда сама найдет и удалит все строчки, содержащие упоминание сайта
+          sed -i '/ROMSFOREVER/d' "$REAL_FILE"
+          # На всякий случай удаляем любые строки, которые начинаются с дефиса и пробела
+          sed -i '/^- /d' "$REAL_FILE"
+          
           echo "=== Компиляция в бинарник ==="
-          # Мы добавили флаг -mfpu=vfpv2, чтобы компилятор увидел математический сопроцессор 3DS
           arm-none-eabi-gcc -march=armv6k -mtune=mpcore -mfloat-abi=hard -mfpu=vfpv2 -O2 -ffunction-sections -fdata-sections \
             -Imock_3ds/include "$REAL_FILE" -Lmock_3ds/lib -lctru -lm -specs=nosys.specs -o game.elf
 
