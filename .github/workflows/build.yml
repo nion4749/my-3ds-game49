@@ -7,10 +7,19 @@ on:
 jobs:
   compile:
     runs-on: ubuntu-latest
-    container: devkitpro/devkit3ds:latest
+    container: devkitpro/devkitarm:latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Install 3DS SDK and libctru
+        run: |
+          # Принудительно обновляем ключи репозитория devkitPro, чтобы не было ошибки 403
+          sudo apt-get update || true
+          dkp-pacman -Sy --noconfirm devkitpro-keyring || true
+          dkp-pacman -Syu --noconfirm
+          # Устанавливаем полный пакет разработки под 3DS (включая libctru)
+          dkp-pacman -S --noconfirm 3ds-dev
 
       - name: Build Game
         run: |
@@ -23,4 +32,3 @@ jobs:
           name: my-3ds-rom
           path: |
             *.3dsx
-
