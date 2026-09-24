@@ -21,12 +21,23 @@ jobs:
 
       - name: Direct Build to 3DSX
         run: |
-          # Вручную задаем пути для облака
           export DEVKITPRO=/opt/devkitpro
           export DEVKITARM=/opt/devkitpro/devkitARM
           
-          echo "=== Компиляция C-кода в бинарник ==="
-          $DEVKITARM/bin/arm-none-eabi-gcc -march=armv6k -mtune=mpcore -mfloat-abi=hard -mfpu=vfpv2 -O2 -mword-relocations -fomit-frame-pointer -ffunction-sections -DARM11 -D_3DS -I$DEVKITPRO/libctru/include -specs=3dsx.specs source/main.c -L$DEVKITPRO/libctru/lib -lctru -lm -o game.elf
+          echo "=== Поиск вашего файла кода ==="
+          # Ищем файл в любых папках, игнорируя регистр букв и расширение .txt
+          REAL_FILE=$(find . -iname "main.c" -o -iname "main.c.txt" | head -n 1)
+          
+          if [ -z "$REAL_FILE" ]; then
+            echo "КРИТИЧЕСКАЯ ОШИБКА: Файл main.c вообще не найден в репозитории!"
+            ls -R
+            exit 1
+          fi
+          
+          echo "Файл успешно найден по адресу: $REAL_FILE"
+          
+          echo "=== Компиляция в бинарник ==="
+          $DEVKITARM/bin/arm-none-eabi-gcc -march=armv6k -mtune=mpcore -mfloat-abi=hard -mfpu=vfpv2 -O2 -mword-relocations -fomit-frame-pointer -ffunction-sections -DARM11 -D_3DS -I$DEVKITPRO/libctru/include -specs=3dsx.specs "$REAL_FILE" -L$DEVKITPRO/libctru/lib -lctru -lm -o game.elf
           
           echo "=== Упаковка в финальный формат 3DSX ==="
           $DEVKITPRO/tools/bin/3dsxtool game.elf my_3ds_game.3dsx
@@ -37,4 +48,3 @@ jobs:
           name: my-3ds-rom
           path: |
             *.3dsx
-
