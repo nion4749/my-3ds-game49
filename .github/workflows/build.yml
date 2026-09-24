@@ -14,17 +14,22 @@ jobs:
 
       - name: Install 3DS SDK and libctru
         run: |
-          # Принудительно обновляем ключи репозитория devkitPro, чтобы не было ошибки 403
           sudo apt-get update || true
           dkp-pacman -Sy --noconfirm devkitpro-keyring || true
           dkp-pacman -Syu --noconfirm
-          # Устанавливаем полный пакет разработки под 3DS (включая libctru)
           dkp-pacman -S --noconfirm 3ds-dev
 
-      - name: Build Game
+      - name: Direct Build to 3DSX
         run: |
-          git config --global --add safe.directory '*'
-          make
+          # Вручную задаем пути для облака
+          export DEVKITPRO=/opt/devkitpro
+          export DEVKITARM=/opt/devkitpro/devkitARM
+          
+          echo "=== Компиляция C-кода в бинарник ==="
+          $DEVKITARM/bin/arm-none-eabi-gcc -march=armv6k -mtune=mpcore -mfloat-abi=hard -mfpu=vfpv2 -O2 -mword-relocations -fomit-frame-pointer -ffunction-sections -DARM11 -D_3DS -I$DEVKITPRO/libctru/include -specs=3dsx.specs source/main.c -L$DEVKITPRO/libctru/lib -lctru -lm -o game.elf
+          
+          echo "=== Упаковка в финальный формат 3DSX ==="
+          $DEVKITPRO/tools/bin/3dsxtool game.elf my_3ds_game.3dsx
 
       - name: Upload Game ROM
         uses: actions/upload-artifact@v4
@@ -32,3 +37,4 @@ jobs:
           name: my-3ds-rom
           path: |
             *.3dsx
+
