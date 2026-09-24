@@ -1,3 +1,3 @@
-- Uploaded by ROMSFOREVER.CO
+- //Uploaded by ROMSFOREVER.CO
 - Free ROMs & ISOs at ROMSFOREVER.CO
 - Please do not delete our credit when re-upload
